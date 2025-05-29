@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPSC Prelims Score Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #eef1f5;
+    }
+    .container {
+      background: #fff;
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+    }
+    #results {
+      margin-top: 30px;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>UPSC Prelims Score Calculator</h2>
+  <label>Total Questions Attempted:</label>
+  <input type="number" id="attempted" />
+
+  <label>Correct Answers:</label>
+  <input type="number" id="correct" />
+
+  <label>Marks Per Correct Answer:</label>
+  <input type="number" id="markPerCorrect" value="2" />
+
+  <label>Negative Mark Per Wrong Answer:</label>
+  <input type="number" id="negativeMark" value="0.66" />
+
+  <button onclick="calculateScore()">Calculate</button>
+
+  <div id="results"></div>
+  <canvas id="resultChart" width="400" height="200"></canvas>
+  <button onclick="downloadPDF()">Download PDF Report</button>
+</div>
+
+<script>
+  function calculateScore() {
+    const attempted = parseInt(document.getElementById("attempted").value);
+    const correct = parseInt(document.getElementById("correct").value);
+    const markPerCorrect = parseFloat(document.getElementById("markPerCorrect").value);
+    const negativeMark = parseFloat(document.getElementById("negativeMark").value);
+
+    const wrong = attempted - correct;
+    const positiveMarks = correct * markPerCorrect;
+    const negativePenalty = wrong * (markPerCorrect + negativeMark);
+    const totalScore = positiveMarks - negativePenalty;
+
+    document.getElementById("results").innerHTML = `
+      <p><strong>Correct:</strong> ${correct} questions</p>
+      <p><strong>Wrong:</strong> ${wrong} questions</p>
+      <p><strong>Positive Marks:</strong> ${positiveMarks}</p>
+      <p><strong>Negative Marks:</strong> ${negativePenalty}</p>
+      <p><strong>Total Score:</strong> ${totalScore.toFixed(2)}</p>
+    `;
+
+    const ctx = document.getElementById('resultChart').getContext('2d');
+    if (window.barChart) window.barChart.destroy();
+    window.barChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Positive Marks', 'Negative Marks'],
+        datasets: [{
+          data: [positiveMarks, negativePenalty],
+          backgroundColor: ['#4CAF50', '#F44336']
+        }]
+      }
+    });
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("UPSC Prelims Calculator Report", 10, 10);
+    const resultText = document.getElementById("results").innerText.split('\n');
+    let y = 20;
+    resultText.forEach(line => {
+      doc.text(line, 10, y);
+      y += 10;
+    });
+    doc.save("UPSC_Prelims_Report.pdf");
+  }
+</script>
+</body>
+</html>
